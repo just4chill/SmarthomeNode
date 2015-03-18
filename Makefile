@@ -19,7 +19,7 @@ OBJS  = main.o spi.o radio.o uart.o adc.o
 OUTPUT = app.elf
 HEXFILE = app.hex
 
-CFLAGS = -g -c -Wall -Os -mmcu=$(MCU) $(INC)
+CFLAGS = -g -c -Wall -Os -mmcu=$(MCU) $(INC) -std=c99
 LFLAGS = -g -Wall -Os -mmcu=$(MCU)
 
 all: $(OBJS)
