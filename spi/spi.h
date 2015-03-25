@@ -2,22 +2,11 @@
 #ifndef __spi_h__
 #define __spi_h__
 
-#include <stdint.h>
+#include <avr/io.h>
 
-#define HIGH_CS PORTB |= (1 << RADIO_CS)
-#define LOW_CS  PORTB &= ~(1 << RADIO_CS)
-
-#define CHIP_NOT_READY (PINB & (1 << RADIO_SO))
-
-// SPI Pins
-#define RADIO_CS	2  // PB1 , Arduino - pin 10
-#define RADIO_SI	3  // PB3 , Arduino - pin 11
-#define RADIO_SO	4  // PB4 , Arduino - pin 12
-#define RADIO_SCK	5  // PB5 , Arduino - pin 13
-
-// Prototypes
-extern void 	spi_init(void);
-extern uint8_t  spi_transfer(uint8_t);
-
+extern void spi_init();
+extern void spi_transfer_sync(uint8_t *, uint8_t *, uint8_t);
+extern void spi_transmit_sync(uint8_t *, uint8_t);
+extern uint8_t spi_fast_shift(uint8_t);
 
 #endif

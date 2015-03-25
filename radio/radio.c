@@ -10,14 +10,15 @@
 #include <string.h>
 #include "uart.h"
 
-static uint8_t tx_buffer[20];
-
 void radio_init(void)
 {
-	DDRC &= ~(1 << 0); // A0 (Temp Sensor GD0)
 	DDRD &= ~(1 << 2); // 2 (GD2 End of packet)
-	PORTC &= ~(1 << 0);
 	PORTD |= (1 << 2);
+	DDRB |= (1 << RADIO_CS);
+
+	// Disable radio 
+	PORTB |= (1 << RADIO_CS);
+	
 	radio_reset();
 	radio_update_settings();
 }
@@ -138,50 +139,6 @@ uint8_t radio_transmit(	uint8_t * txbuff,
 		gd0_state = PIND & (1 << 2);
 	}
 	return result;
-}
-
-uint8_t radio_transmit_packet(	uint8_t * txbuff,
-								uint8_t len,
-								uint8_t destination){
-
-	tx_buffer[LENGTH_FIELD_INDEX]  = len;
-	tx_buffer[ADDRESS_FIELD_INDEX] = destination;
-
-	memcpy(&tx_buffer[DATA_FIELD_INDEX], txbuff, len);
-
-	return radio_transmit(tx_buffer, len + 2);
-}
-
-uint8_t radio_receive_packet(	uint8_t * rxbuff,
-								uint8_t len){
-	uint8_t status[2];
-	uint8_t packet_len;
-
-	if((radio_read_status(TI_CCxxx0_RXBYTES) & TI_CCxxx0_NUM_RXBYTES))
-	{
-		packet_len = radio_read_single(TI_CCxxx0_RXFIFO);
-
-		// FIXME packet_len <= *len
-		if(packet_len <= len)
-		{
-			radio_read_burst(TI_CCxxx0_RXFIFO, rxbuff, packet_len);
-			len = packet_len;
-
-			radio_read_burst(TI_CCxxx0_RXFIFO, status, 2);
-
-			memcpy(&rxbuff[packet_len], status, 2);
-
-			return (status[TI_CCxxx0_LQI_RX] & TI_CCxxx0_CRC_OK);
-		}
-		else
-		{
-			// FIXME
-			len = packet_len;
-			radio_write_strobe(TI_CCxxx0_SFRX);
-			return 0;
-		}
-	}
-	return 0;
 }
 
 uint8_t radio_update_settings(void)

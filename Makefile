@@ -7,14 +7,13 @@ HFUSE = 0xD9
 
 INC = 	-Iapp \
 		-Iradio \
-		-Iradio/inc \
 		-Ispi \
 		-Iuart \
-		-Iadc
+		-Inrf
 
-VPATH = app:radio:spi:uart:adc
+VPATH = app:radio:spi:uart:nrf
 
-OBJS  = main.o spi.o radio.o uart.o adc.o
+OBJS  = main.o spi.o uart.o mirf.o
 
 OUTPUT = app.elf
 HEXFILE = app.hex
@@ -45,5 +44,5 @@ radio.o: radio.c
 uart.o: uart.c
 	$(CC)gcc $(CFLAGS) $^ -o $@
 
-adc.o: adc.c
-	$(CC)gcc $(CFLAGS) $^ -o $@ 
+mirf.o: mirf.c
+	$(CC)gcc $(CFLAGS) $^ -o $@

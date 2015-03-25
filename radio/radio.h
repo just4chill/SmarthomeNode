@@ -15,6 +15,14 @@
 #define radioSetChannel(chan) radio_write_single(TI_CCxxx0_CHANNR, chan)
 #define radioSetPower(powr) radio_write_burst(TI_CCxxx0_PATABLE, &powr,1)
 
+#define HIGH_CS PORTB |= (1 << RADIO_CS)
+#define LOW_CS  PORTB &= ~(1 << RADIO_CS)
+
+#define CHIP_NOT_READY (PINB & (1 << RADIO_SO))
+
+// SPI Pins
+#define RADIO_CS	2  // PB1 , Arduino - pin 10
+
 extern void radio_init(void);
 extern uint8_t radio_reset(void);
 extern uint8_t radio_write_strobe(uint8_t);
@@ -27,8 +35,6 @@ extern uint8_t radio_enable_addressing(void);
 extern uint8_t radio_disable_addressing(void);
 extern uint8_t radio_sleep(void);
 extern uint8_t radio_transmit(uint8_t *, uint8_t);
-extern uint8_t radio_transmit_packet(uint8_t *, uint8_t, uint8_t);
-extern uint8_t radio_receive_packet(uint8_t *, uint8_t);
 extern uint8_t radio_update_settings(void);
 
 #define VAL_IOCFG2 0x29

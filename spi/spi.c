@@ -1,58 +1,59 @@
 
-#include "config.h"
 #include "spi.h"
-#include <stdint.h>
-
 #include <avr/io.h>
-#include <util/delay.h>
-#include <stdio.h>
-#include "uart.h"
+#include <avr/interrupt.h>
 
-void spi_init(void)
+#define PORT_SPI    PORTB
+#define DDR_SPI     DDRB
+#define DD_MISO     DDB4
+#define DD_MOSI     DDB3
+#define DD_SS       DDB2
+#define DD_SCK      DDB5
+
+
+void spi_init()
+// Initialize pins for spi communication
 {
-	DDRB |= (1 << RADIO_SI) | (1 << RADIO_SCK) | 
-			(1 << RADIO_CS);
+    DDR_SPI &= ~((1<<DD_MOSI)|(1<<DD_MISO)|(1<<DD_SS)|(1<<DD_SCK));
+    // Define the following pins as output
+    DDR_SPI |= ((1<<DD_MOSI)|(1<<DD_SS)|(1<<DD_SCK));
+   
+    SPCR = ((1<<SPE)|               // SPI Enable
+            (0<<SPIE)|              // SPI Interupt Enable
+            (0<<DORD)|              // Data Order (0:MSB first / 1:LSB first)
+            (1<<MSTR)|              // Master/Slave select   
+            (0<<SPR1)|(1<<SPR0)|    // SPI Clock Rate
+            (0<<CPOL)|              // Clock Polarity (0:SCK low / 1:SCK hi when idle)
+            (0<<CPHA));             // Clock Phase (0:leading / 1:trailing edge sampling)
 
-	// MISO as input
-	DDRB &= ~(1 << RADIO_SO);
-
-	// Disable radio 
-	PORTB |= (1 << RADIO_CS);
-
-	// Pull low MOSI
-	PORTB &= ~(1 << RADIO_SI);
-
-	// Pull high SCK
-	PORTB |= (1 << RADIO_SCK);
-
-	// SPI enable and master mode
-	SPCR |= (1 << SPE) | (1 << MSTR);
-
-	SPCR &= ~(1 << CPHA);
-	SPCR &= ~(1 << CPOL);
-
-	// Double speed
-	SPSR |= (1 << SPI2X);
+    SPSR = (1<<SPI2X);              // Double Clock Rate
 }
 
-uint8_t spi_transfer(uint8_t dat)
+void spi_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
+// Shift full array through target device
 {
-	// char buff[20];
-	uint8_t result;
+       uint8_t i;      
+       for (i = 0; i < len; i++) {
+             SPDR = dataout[i];
+             while((SPSR & (1<<SPIF))==0);
+             datain[i] = SPDR;
+       }
+}
 
-	// start transmission
-    SPDR = dat;
+void spi_transmit_sync (uint8_t * dataout, uint8_t len)
+// Shift full array to target device without receiving any byte
+{
+       uint8_t i;      
+       for (i = 0; i < len; i++) {
+             SPDR = dataout[i];
+             while((SPSR & (1<<SPIF))==0);
+       }
+}
 
-    // wait for end of transmission
-    while (!(SPSR & (1 << SPIF))) 
-    {
-		__asm(
-			"NOP\n"
-			"NOP\n"
-		);
-    }
-    result = SPDR;
-
-    // return received byte
-    return result;
+uint8_t spi_fast_shift (uint8_t data)
+// Clocks only one byte to target device and returns the received one
+{
+    SPDR = data;
+    while((SPSR & (1<<SPIF))==0);
+    return SPDR;
 }
